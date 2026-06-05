@@ -8,7 +8,7 @@ A collection of complete example accelerators and demos built with the Beethoven
 |---|---|---|
 | [`GameBoy`](GameBoy/) | AUP-ZU3 / Zynq UltraScale+ | Game Boy / Game Boy Color emulator: PS Linux owns ROM loading, GTK display, input, audio, save/RTC persistence; PL runs the GBC core through Beethoven command and memory-stream interfaces. |
 | [`SystolicArray`](SystolicArray/) | Generic | Simple systolic-array accelerator with a fixed-point matmul testbench. |
-| [`SHAKE256`](SHAKE256/) | Generic simulation (`default` / Icarus) | Verilog blackbox SHAKE256-backed LWR PRF demo with a C++ software reference testbench. |
+| [`SHAKE256`](SHAKE256/) | Generic | Verilog SHAKE256 demo with a C++ software reference testbench. |
 
 ## Checkout layout
 
