@@ -1,23 +1,19 @@
 # Implementation Plan
 
-## Phase 0: Preserve Reference Context
+## Phase 0: Preserve Core Boundary
 
-Goal: make the port reproducible and keep reference code close.
+Goal: make the port reproducible and keep the external core interface clear.
 
 Tasks:
 
-- Record the Game Bub source commits inspected for reference.
-- Keep Game Bub only as an external reference checkout outside the project, not
-  as a submodule or build dependency.
-- Define an independent core boundary so implementation can proceed without
-  importing upstream code.
+- Define the `ExternalGameboyCore` boundary used by the PS/PL contract.
 - Confirm license implications for distributing derived FPGA and software code.
+- Keep the repository free of user ROMs and generated build products.
 
 Exit criteria:
 
-- The reference Game Bub source versions are documented.
-- The project builds without Game Bub source code.
 - The project has a stable external-core interface to implement against.
+- The project builds from checked-in source plus generated Beethoven artifacts.
 
 ## Phase 1: Minimal Core Extraction
 
@@ -43,7 +39,7 @@ Tasks:
 
 Exit criteria:
 
-- The shell wrapper elaborates to SystemVerilog without any Game Bub code.
+- The shell wrapper elaborates to SystemVerilog without external source checkouts.
 - Simulation can later show that framebuffer write events and audio samples are
   produced for a known ROM once the independent core is connected.
 

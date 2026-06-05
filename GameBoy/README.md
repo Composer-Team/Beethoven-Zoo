@@ -38,24 +38,21 @@ split:
 - Full Beethoven framework changes unless the existing ZU3 platform surface is
   insufficient.
 
-## Source Reference
+## Source Acknowledgement
 
-The intended upstream core reference is Game Bub:
+The Game Boy/Game Boy Color core in `hw/src/main/scala/gameboy/**` is derived
+from the GPLv3 Game Bub project and adapted locally for this Beethoven/ZU3
+example. Game Bub is acknowledged as the upstream reference, but it is not
+vendored here and is not a build-time dependency.
 
-- Current repo: `https://github.com/elipsitz/gamebub`
-- Useful Zynq reference tag: `pynq-release`
-
-- `GameBoy/third_party/gamebub` contains the inspected upstream checkout.
-- The vendored `hw/src/main/scala/gameboy/**` core is derived from that
-  reference and adapted locally for this project's Beethoven/ZU3 wrapper.
-  The project does not build against `third_party/gamebub`; it builds against
-  the local copied/adapted sources under `hw/`.
+- Upstream: `https://github.com/elipsitz/gamebub`
+- Zynq reference tag inspected during development: `pynq-release`
 
 ## ROM policy
 
-User ROM files are intentionally not committed. The example accepts `.gb` and
-`.gbc` files supplied by the user at run time, and the repository `.gitignore`
-excludes ROMs, save files, RTC persistence files, and board-local ROM staging
+User ROM files are intentionally not committed. The example accepts user-supplied `.gbc` files at run time, and the
+repository `.gitignore` excludes ROMs, save files, RTC persistence files, and
+board-local ROM staging
 directories. The included screenshot uses the public `cgb-acid2` test ROM.
 
 ## Project Layout

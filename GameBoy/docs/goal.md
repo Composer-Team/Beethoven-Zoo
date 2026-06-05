@@ -64,10 +64,9 @@ The first target should not expose or require these PL pins:
 
 ## Compatibility Scope
 
-Phase 1 targets Game Boy and Game Boy Color ROM-file playback using an
-independent core that follows this repo's PS/PL interface. Game Bub may be used
-as a reference during development, but this project must not depend on Game Bub
-code or generated artifacts. Physical cartridges and GBA are deferred.
+Phase 1 targets Game Boy and Game Boy Color ROM-file playback using a core
+that follows this repo's PS/PL interface. Physical cartridges and GBA are
+deferred.
 
 ## Definition Of Done For Phase 1
 
