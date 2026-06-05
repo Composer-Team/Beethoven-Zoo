@@ -7,6 +7,7 @@ A collection of complete example accelerators and demos built with the Beethoven
 | Example | Platform | Summary |
 |---|---|---|
 | [`GameBoy`](GameBoy/) | AUP-ZU3 / Zynq UltraScale+ | Game Boy / Game Boy Color emulator: PS Linux owns ROM loading, GTK display, input, audio, save/RTC persistence; PL runs the GBC core through Beethoven command and memory-stream interfaces. |
+| [`SystolicArray`](SystolicArray/) | Generic simulation (`default` / Icarus) | Manifest-driven port of the legacy Chisel systolic-array accelerator with a deterministic C++ fixed-point matmul testbench. |
 
 ## Checkout layout
 
