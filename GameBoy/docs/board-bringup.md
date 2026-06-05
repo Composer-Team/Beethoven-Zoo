@@ -92,7 +92,36 @@ bridge did not become ready; stdout='' stderr='Error opening file /compo_c_1001 
 
 ## Program The PL
 
-Use the loader available on the board. Examples:
+Use the loader available for the board connection. `beethoven flash` can program
+the generated bitstream over Vivado/JTAG when run on the machine connected to
+the board's JTAG cable and able to reach Xilinx `hw_server` at `localhost:3121`:
+
+```bash
+# Vivado/JTAG path from the GameBoy project root
+beethoven flash
+
+# Equivalent when running the CLI from source
+cargo run --manifest-path ../../Beethoven-Software/cli/Cargo.toml -- flash
+```
+
+This uses `target/synthesis/implementation/jtag_program.tcl` and the bitstream
+under `target/synthesis/implementation/xilinx_work/beethoven.runs/impl_1/`. It
+does not use Linux FPGA manager and does not write nonvolatile boot flash.
+
+Observed GBC emulator flash test from the Zoo checkout:
+
+```text
+cd Beethoven-Zoo/GameBoy
+cargo run --manifest-path ../../Beethoven-Software/cli/Cargo.toml -- flash
+...
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Xilinx/880225000189A
+INFO: [Labtools 27-3164] End of startup status: HIGH
+=== post-program done state ===
+  device : xczu3_0
+✓ flash complete.
+```
+
+Other board-side loaders remain valid. Examples:
 
 ```bash
 # fpgautil-style systems
