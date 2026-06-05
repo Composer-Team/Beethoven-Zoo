@@ -1,0 +1,25 @@
+target/
+sw/build/
+/.bsp/
+/.metals/
+/.scala-build/
+/.idea/
+/.vscode/
+*.class
+*.log
+__pycache__/
+*.py[cod]
+/.cache/
+
+# Simulation/waveform/debug artifacts
+*.vcd
+*.fst
+*.wdb
+*.jou
+
+# User-provided ROMs and save/RTC persistence files are never committed.
+# User ROMs for this demo are .gbc files.
+*.gbc
+*.sav
+*.rtc
+roms/

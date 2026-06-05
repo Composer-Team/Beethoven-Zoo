@@ -1,0 +1,26 @@
+# Beethoven project manifest for the ZU3 Game Boy emulator.
+
+[project]
+name = "gameboy"
+
+[hardware]
+src-dir = "hw"
+
+[hardware.beethoven-hardware]
+# Beethoven-Zoo is expected to be cloned next to Beethoven-Hardware.
+path = "../../Beethoven-Hardware"
+
+[software]
+src-dir = "sw"
+
+[platform]
+target = "aupzu3"
+simulator = "verilator"
+
+[platform.aupzu3]
+dram-size-gb = 4
+memory-channels = 1
+clock-rate-mhz = 100
+
+[build]
+output-dir = "target"

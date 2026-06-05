@@ -1,0 +1,26 @@
+# Build/generated outputs
+**/target/
+**/sw/build/
+**/.bsp/
+**/.metals/
+**/.scala-build/
+**/.idea/
+**/.vscode/
+**/.cache/
+**/__pycache__/
+**/*.class
+**/*.py[cod]
+
+# Simulation/waveform/debug artifacts
+**/*.vcd
+**/*.fst
+**/*.wdb
+**/*.jou
+**/*.log
+
+# User ROMs and emulator persistence files are not redistributed.
+# User ROMs for this demo are .gbc files.
+**/*.gbc
+**/*.sav
+**/*.rtc
+**/roms/
