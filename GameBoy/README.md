@@ -62,6 +62,8 @@ directories. The included screenshot uses the public `cgb-acid2` test ROM.
 - `docs/goal.md`: detailed target definition and constraints.
 - `docs/implementation-plan.md`: phased implementation plan.
 - `docs/interfaces.md`: PS/PL interface contract.
+- `docs/beethoven-interfaces.md`: tables of every Beethoven interface used by
+  the example and how each one simplifies PS/PL development.
 - `docs/board-bringup.md`: privileged AUP-ZU3 programming and validation
   checklist.
 - `scripts/`: validation helpers, including `host_smoke.py`, `sim_smoke.py`, `board_smoke.py`, `board_gui_smoke.py`, and `board_cart_persistence_smoke.py`.
