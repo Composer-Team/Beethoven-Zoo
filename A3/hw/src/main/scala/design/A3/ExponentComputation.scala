@@ -2,9 +2,10 @@ package design.A3
 
 import beethoven.common.ShiftReg
 import chisel3._
-import chisel3.experimental.FixedPoint
-import chipsalliance.rocketchip.config.Parameters
-import freechips.rocketchip.diplomacy.ValName
+import fixedpoint._
+import fixedpoint.shadow.{Mux, Mux1H, MuxCase, MuxLookup, PriorityMux}
+import org.chipsalliance.cde.config.Parameters
+import org.chipsalliance.diplomacy.ValName
 
 class ExponentComputation()(implicit params: A3Params, p: Parameters) extends Module {
 
@@ -12,12 +13,10 @@ class ExponentComputation()(implicit params: A3Params, p: Parameters) extends Mo
     if (latency <= 0) x
     else {
       implicit val valName: ValName = ValName(s"expShift_${latency}")
-      ShiftReg(x.asUInt, latency, clock, a => a, useMemory = useMemory, withWidth = withWidth).asFixedPoint(x.binaryPoint)
+      ShiftReg(x.asSInt.asUInt, latency, clock, a => a, useMemory = useMemory, withWidth = withWidth).asFixedPoint(x.binaryPoint)
     }
   }
 
-  private final val upperHalfLookupTable = VecInit(params.UPPER_HALF_DOUBLES.map(A3FP(_, FPType.ExpSum)))
-  private final val lowerHalfLookupTable = VecInit(params.LOWER_HALF_DOUBLES.map(A3FP(_, FPType.ExpSum)))
 
   val io = IO(new Bundle {
     val start = Input(Bool())
@@ -58,11 +57,18 @@ class ExponentComputation()(implicit params: A3Params, p: Parameters) extends Mo
   private val upperHalfExp = Reg(A3FP(FPType.ExpTable))
   private val lowerHalfExp = Reg(A3FP(FPType.ExpTable))
 
-  val differenceUpperPrelookup = (difference.asUInt >> params.LOWER_HALF_LOOKUP_TABLE_WIDTH.U).asUInt(params.UPPER_HALF_LOOKUP_TABLE_WIDTH - 1, 0)
-  val differenceLowerPrelookup = (difference.asUInt & params.LOWER_HALF_LOOKUP_TABLE_MASK.U)(params.LOWER_HALF_LOOKUP_TABLE_WIDTH - 1, 0)
+  val differenceUpperPrelookup = (difference.asSInt.asUInt >> params.LOWER_HALF_LOOKUP_TABLE_WIDTH.U).asUInt(params.UPPER_HALF_LOOKUP_TABLE_WIDTH - 1, 0)
+  val differenceLowerPrelookup = (difference.asSInt.asUInt & params.LOWER_HALF_LOOKUP_TABLE_MASK.U)(params.LOWER_HALF_LOOKUP_TABLE_WIDTH - 1, 0)
 
-  upperHalfExp := upperHalfLookupTable(differenceUpperPrelookup)
-  lowerHalfExp := lowerHalfLookupTable(differenceLowerPrelookup)
+  private val upperHalfLUT = Module(new A3LUT(params.UPPER_HALF_LOOKUP_TABLE_WIDTH, FPType.ExpSum, "Upper", params.UPPER_HALF_DOUBLES))
+  private val lowerHalfLUT = Module(new A3LUT(params.LOWER_HALF_LOOKUP_TABLE_WIDTH, FPType.ExpSum, "Lower", params.LOWER_HALF_DOUBLES))
+  upperHalfLUT.io.clk := clock
+  lowerHalfLUT.io.clk := clock
+  upperHalfLUT.io.in := differenceUpperPrelookup
+  lowerHalfLUT.io.in := differenceLowerPrelookup
+
+  upperHalfExp := upperHalfLUT.io.out
+  lowerHalfExp := lowerHalfLUT.io.out
 
   private val fullExp = Reg(A3FP(FPType.Exp))
   fullExp := upperHalfExp * lowerHalfExp

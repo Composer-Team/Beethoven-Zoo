@@ -1,7 +1,8 @@
 package design.A3
 
 import chisel3._
-import chisel3.experimental.FixedPoint
+import fixedpoint._
+import fixedpoint.shadow.{Mux, Mux1H, MuxCase, MuxLookup, PriorityMux}
 import chisel3.util.{log2Ceil, log2Up}
 import design.A3.FPType.FPType
 

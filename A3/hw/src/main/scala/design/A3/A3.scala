@@ -2,9 +2,10 @@ package design.A3
 
 import beethoven.MemoryStreams.ScratchpadDataPort
 import chisel3._
-import chisel3.experimental.FixedPoint
+import fixedpoint._
+import fixedpoint.shadow.{Mux, Mux1H, MuxCase, MuxLookup, PriorityMux}
 import chisel3.util.log2Up
-import chipsalliance.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 
 class A3()(implicit params: A3Params, p: Parameters) extends Module {
 

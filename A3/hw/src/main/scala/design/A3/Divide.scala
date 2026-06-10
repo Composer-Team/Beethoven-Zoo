@@ -2,7 +2,7 @@ package design.A3
 
 import beethoven.common.ShiftReg
 import chisel3._
-import chipsalliance.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 
 class Divide()(implicit params: A3Params, p: Parameters) extends Module {
   val useCustomDivide = true

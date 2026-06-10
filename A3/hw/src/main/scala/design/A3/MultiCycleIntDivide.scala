@@ -3,7 +3,7 @@ package design.A3
 import beethoven.common.ShiftReg
 import chisel3._
 import chisel3.util._
-import chipsalliance.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 
 class OneBitDivider(divisorWidth: Int) extends Module {
   val io = IO(new Bundle {

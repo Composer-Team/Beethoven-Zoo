@@ -4,7 +4,15 @@ import beethoven._
 import beethoven.common._
 import beethoven.Generation.CppGeneration
 
-class WithA3(numCores: Int, params: A3Params) extends AcceleratorConfig({
+class A3Config extends AcceleratorConfig({
+  val numCores = 1
+  val params = A3Params(
+    n = 320,
+    d = 64,
+    i = 4,
+    f = 4
+  )
+
   CppGeneration.addUserCppDefinition(
     Seq(
       ("uint16_t", "n", params.n),
@@ -47,13 +55,3 @@ class WithA3(numCores: Int, params: A3Params) extends AcceleratorConfig({
     )
   )
 })
-
-class A3Config extends WithA3(
-  numCores = 1,
-  params = A3Params(
-    n = 320,
-    d = 64,
-    i = 4,
-    f = 4
-  )
-)

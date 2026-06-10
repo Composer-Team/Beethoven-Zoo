@@ -3,9 +3,10 @@ package design.A3
 import beethoven.MemoryStreams.ScratchpadDataPort
 import beethoven.common._
 import chisel3._
-import chisel3.experimental.FixedPoint
+import fixedpoint._
+import fixedpoint.shadow.{Mux, Mux1H, MuxCase, MuxLookup, PriorityMux}
 import chisel3.util.{Enum, log2Up}
-import chipsalliance.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 
 class OutputComputation()(implicit params: A3Params, p: Parameters) extends Module {
 
@@ -59,14 +60,14 @@ class OutputComputation()(implicit params: A3Params, p: Parameters) extends Modu
     weightCounter := weightCounter + 1.U
   }
   private val shiftedScoreIn = Wire(UInt((dividendWidth + bonusShift).W))
-  shiftedScoreIn := RegNext((io.score << bonusShift).asUInt)
+  shiftedScoreIn := RegNext((io.score << bonusShift).asSInt.asUInt)
 
   private val divider = Module(new Divide())
   val sumStationary = Reg(io.sumOfExponents.cloneType)
   when(io.start) {
     sumStationary := io.sumOfExponents
   }
-  divider.io.sumIn := sumStationary.asUInt
+  divider.io.sumIn := sumStationary.asSInt.asUInt
   divider.io.shiftedScoreIn := shiftedScoreIn
 
   val firstAssignment = Reg(Bool())

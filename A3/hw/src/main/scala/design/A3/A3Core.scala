@@ -4,8 +4,10 @@ import beethoven._
 import beethoven.Generation.CppGeneration
 import beethoven.common._
 import chisel3._
+import fixedpoint._
+import fixedpoint.shadow.{Mux, Mux1H, MuxCase, MuxLookup, PriorityMux}
 import chisel3.util._
-import chipsalliance.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 
 class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore {
   val numQueriesWidth = Address.addrBits() - log2Ceil(params.d * params.INPUT_WIDTH_TOTAL / 8)
@@ -137,7 +139,7 @@ class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore
 
     is(sWriteOutput) {
       writer.dataChannel.data.valid := true.B
-      writer.dataChannel.data.bits := writeOut(writeCounter).asUInt
+      writer.dataChannel.data.bits := writeOut(writeCounter).asSInt.asUInt
       when(writer.dataChannel.data.fire) {
         when(writeCounter === (params.d - 1).U) {
           state := sFinish

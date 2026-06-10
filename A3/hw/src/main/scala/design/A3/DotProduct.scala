@@ -3,10 +3,11 @@ package design.A3
 import beethoven.MemoryStreams.ScratchpadDataPort
 import beethoven.common.{ShiftReg, splitIntoChunks}
 import chisel3._
-import chisel3.experimental.FixedPoint
+import fixedpoint._
+import fixedpoint.shadow.{Mux, Mux1H, MuxCase, MuxLookup, PriorityMux}
 import chisel3.util.{Enum, isPow2, log2Up}
-import chipsalliance.rocketchip.config.Parameters
-import freechips.rocketchip.diplomacy.ValName
+import org.chipsalliance.cde.config.Parameters
+import org.chipsalliance.diplomacy.ValName
 
 import scala.annotation.tailrec
 
@@ -49,7 +50,7 @@ class DotProduct()(implicit params: A3Params, p: Parameters) extends Module {
     if (latency <= 0) x
     else {
       implicit val valName: ValName = ValName(s"dotProductShift_${latency}")
-      ShiftReg(x.asUInt, latency, clock, a => a, useMemory = useMemory, withWidth = withWidth).asFixedPoint(x.binaryPoint)
+      ShiftReg(x.asSInt.asUInt, latency, clock, a => a, useMemory = useMemory, withWidth = withWidth).asFixedPoint(x.binaryPoint)
     }
   }
 
