@@ -23,7 +23,7 @@ class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore
 
   val io = BeethovenIO(new A3Command, EmptyAccelResponse())
 
-  val sIdle :: sEmitLoads :: sWaitQuery :: sWaitOutput :: sWriteOutput :: sFinish :: Nil = Enum(6)
+  val sIdle :: sEmitLoads :: sWaitRefresh :: sWaitQuery :: sWaitOutput :: sWriteOutput :: sFinish :: Nil = Enum(7)
   val state = RegInit(sIdle)
 
   val refreshSpads = RegInit(false.B)
@@ -33,6 +33,7 @@ class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore
   val valueReqAddr = Reg(Address())
   val writeCounter = RegInit(0.U(log2Up(params.d + 1).W))
   val writeOut = Reg(Vec(params.d, A3FP(FPType.Output)))
+  val refreshWaitCounter = RegInit(0.U(16.W))
 
   val reader = getReaderModule("ReadChannel")
   val writer = getWriterModule("WriteChannel")
@@ -46,7 +47,7 @@ class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore
   val outputWidthBits = pow2ByteAlign(params.OUTPUT_WIDTH_TOTAL)
   val outputWidthBytes = outputWidthBits / 8
   val keyValueLenBytes = params.n * params.d * params.INPUT_WIDTH_TOTAL / 8
-
+  val refreshWaitCycles = keyValueLenBytes / 16 + 2048
   require(queryWidthBits % 8 == 0)
   require(isPow2(queryWidthBytes))
   require(outputWidthBits % 8 == 0)
@@ -93,6 +94,7 @@ class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore
   a3.io.respReady := true.B
   a3.io.keysScratchpad <> keysScratchpad
   a3.io.valuesScratchpad <> valuesScratchpad
+  require(refreshWaitCycles < (1 << refreshWaitCounter.getWidth))
 
   switch(state) {
     is(sIdle) {
@@ -104,6 +106,7 @@ class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore
         writerReqAddr := io.req.bits.output_ADDR
         readerReqAddr := io.req.bits.query_ADDR
         writeCounter := 0.U
+        refreshWaitCounter := 0.U
         state := sEmitLoads
       }
     }
@@ -111,6 +114,13 @@ class A3Core()(implicit p: Parameters, params: A3Params) extends AcceleratorCore
     is(sEmitLoads) {
       val scratchpadsReady = !refreshSpads || (keys.requestChannel.init.ready && values.requestChannel.init.ready)
       when(reader.requestChannel.ready && writer.requestChannel.ready && scratchpadsReady) {
+        state := Mux(refreshSpads, sWaitRefresh, sWaitQuery)
+      }
+    }
+
+    is(sWaitRefresh) {
+      refreshWaitCounter := refreshWaitCounter + 1.U
+      when(refreshWaitCounter === refreshWaitCycles.U) {
         state := sWaitQuery
       }
     }

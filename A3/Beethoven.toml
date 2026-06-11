@@ -1,4 +1,4 @@
-# Beethoven project manifest for the A3 attention simulation demo.
+# Beethoven project manifest for the A3 attention ZU3 demo.
 
 [project]
 name = "a3"
@@ -14,10 +14,12 @@ path = "../../Beethoven-Hardware"
 src-dir = "sw"
 
 [platform]
-target = "default"
+target = "aupzu3"
 simulator = "icarus"
 
-[platform.default]
+[platform.aupzu3]
+dram-size-gb = 4
+memory-channels = 1
 clock-rate-mhz = 100
 
 [build]
