@@ -1,0 +1,24 @@
+# Beethoven project manifest for the dot-product simulation demo.
+
+[project]
+name = "dot_product"
+
+[hardware]
+src-dir = "hw"
+
+[hardware.beethoven-hardware]
+# Beethoven-Zoo is expected to be cloned next to Beethoven-Hardware.
+path = "../../Beethoven-Hardware"
+
+[software]
+src-dir = "sw"
+
+[platform]
+target = "default"
+simulator = "icarus"
+
+[platform.default]
+clock-rate-mhz = 100
+
+[build]
+output-dir = "target"
