@@ -1,24 +1,40 @@
-# Beethoven project manifest for the dot-product simulation demo.
+# Beethoven project manifest — analogous to Cargo.toml.
+# The `beethoven` CLI reads this and generates the hidden sbt + cmake builds
+# under target/. Users should not need to edit build.sbt or CMakeLists.txt by hand.
+#
+# Convention: keys that are commented out show their default value. Uncomment
+# only to override.
 
 [project]
-name = "dot_product"
+name = "vector_add"
 
 [hardware]
-src-dir = "hw"
+# src-dir = "hw"               # optional, default "hw"
 
+## Beethoven-Hardware dependency. Default is `version = "latest.integration"` so a
+## fresh `beethoven build` always pulls the newest published artifact. Switch to:
+##   `version = "X.Y.Z"` to pin to a published release for reproducible builds
+##   `path = "../Beethoven-Hardware"` to source-link a sibling checkout while
+##                                    iterating on the framework
 [hardware.beethoven-hardware]
-# Beethoven-Zoo is expected to be cloned next to Beethoven-Hardware.
-path = "../../Beethoven-Hardware"
+version = "latest.integration"   # always resolves the newest published artifact
+# version = "0.1.7-dev12"          # uncomment to pin to the version captured by `beethoven setup`
+# path = "../Beethoven-Hardware"   # uncomment to source-link a sibling checkout
 
-[software]
-src-dir = "sw"
+# [software]                   # entire section optional
+# src-dir = "sw"               # default "sw"
 
 [platform]
+## Deployment target. One of:
+##   default | kria | kria2 | aupzu3 | aws-f1 | aws-f2 | u200
+##
 target = "default"
-simulator = "icarus"
 
-[platform.default]
-clock-rate-mhz = 100
+## Platform-specific parameters. Only the table matching `platform.target` is
+## read. The required keys depend on the chosen target — `aupzu3` needs at
+## minimum `dram-size-gb` (the AUPZU3Platform constructor asserts 4 or 8).
 
-[build]
-output-dir = "target"
+
+## Build output directory.
+# [build]                      # entire section optional
+# output-dir = "target"        # default "target"

@@ -1,37 +1,29 @@
+
+// See README.md for license details.
+
 ThisBuild / scalaVersion := "2.13.16"
-ThisBuild / version := "0.1.0"
-ThisBuild / organization := "local"
+ThisBuild / version := "0.0.0"
 
 val chiselVersion = "7.1.0"
 
-val beethovenHardwarePath = sys.env
-  .get("BEETHOVEN_HARDWARE")
-  .map(file)
-  .getOrElse {
-    Seq(
-      file("../../Beethoven-Hardware"), // Beethoven-Zoo cloned next to Beethoven-Hardware
-      file("../Beethoven-Hardware")     // legacy in-tree checkout layout
-    ).find(_.exists()).getOrElse(file("../../Beethoven-Hardware"))
-  }
 
-lazy val beethovenHardware = RootProject(beethovenHardwarePath)
-
-lazy val root = (project in file("."))
-  .dependsOn(beethovenHardware)
-  .settings(
-    name := "beethoven-systolic-array",
-    target := baseDirectory.value / "target" / ".sbt",
-    Compile / unmanagedSourceDirectories := Seq(baseDirectory.value / "hw" / "src" / "main" / "scala"),
-    Test / unmanagedSourceDirectories := Seq.empty,
-    Compile / mainClass := Some("beethoven.cli.Run"),
-    libraryDependencies += "org.chipsalliance" %% "chisel" % chiselVersion,
-    resolvers += ("reposilite-repository-releases" at "http://54.165.244.214:8080/releases").withAllowInsecureProtocol(true),
-    scalacOptions ++= Seq(
-      "-language:reflectiveCalls",
-      "-deprecation",
-      "-feature",
-      "-Xcheckinit",
-      "-Ymacro-annotations"
-    ),
-    addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full)
-  )
+lazy val root = {
+  (project in file("."))
+    .settings(
+      name := "vector_add",
+      // Redirect sbt's compile cache out of the way so target/ is mostly
+      // Beethoven outputs (binding/, simulation/ | synthesis/, .cache/)
+      // plus a single hidden target/.sbt/ sibling holding sbt's bookkeeping
+      // (scala-2.13, streams, bg-jobs, etc.). The meta-build's own target
+      // (vector_add/project/target/) is left as-is — small, sbt-managed.
+      target := baseDirectory.value / "target" / ".sbt",
+      Compile / unmanagedSourceDirectories := Seq(baseDirectory.value / "hw"),
+      Test / unmanagedSourceDirectories := Seq.empty,
+      Compile / mainClass := Some("beethoven.cli.Run"),
+      libraryDependencies += "org.chipsalliance" %% "chisel" % chiselVersion,
+      libraryDependencies += "edu.duke.cs.apex" %% "beethoven-hardware" % "latest.integration",
+      // we're currently hosting a maven server on an AWS instance, prior to official release on a global repository
+      resolvers += ("reposilite-repository-releases" at "http://54.165.244.214:8080/releases").withAllowInsecureProtocol(true),
+      addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),
+    )
+}

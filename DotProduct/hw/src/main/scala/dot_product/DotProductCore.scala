@@ -11,7 +11,8 @@ import dot_product.Constants._
 // Fields become arguments to the generated C++ stub (sorted alphabetically):
 //   DotProductCore::dot_product(core_id, in_addr, length)
 class DotProductCmd(implicit p: Parameters) extends AccelCommand("dot_product") {
-  val in_addr = Address()      // base of the interleaved {a,b} pair stream
+  val in_addr_a = Address()      // base of the interleaved {a,b} pair stream
+  val in_addr_b = Address()
   val length  = UInt(20.W)     // number of pairs (max ~1M)
 }
 
@@ -26,23 +27,31 @@ class DotProductResp extends AccelResponse("dot_product_resp") {
 class DotProductCore(implicit p: Parameters) extends AcceleratorCore {
   val io = BeethovenIO(new DotProductCmd(), new DotProductResp())
 
-  // A single read channel; each beat carries one (a, b) pair.
+  // Two read channels, one per input vector; each beat carries one element.
   // No write channel — the scalar result is returned in the response.
-  val pairs = getReaderModule("pairs")
-
+  val vec_a = getReaderModule("vec_a")
+  val vec_b = getReaderModule("vec_b")
+  val vec_out = getWriterModule("vec_out")
   val cmd_fire = io.req.fire
 
   // Fire the memory request on the same cycle as the incoming command.
-  pairs.requestChannel.valid     := cmd_fire
-  pairs.requestChannel.bits.addr := io.req.bits.in_addr
-  // Total bytes = pair count × bytes per pair.
-  pairs.requestChannel.bits.len  := pairBytes.U * io.req.bits.length
+  vec_a.requestChannel.valid     := cmd_fire
+  vec_b.requestChannel.valid     := cmd_fire
+  vec_a.requestChannel.bits.addr := io.req.bits.in_addr_a
+  vec_b.requestChannel.bits.addr := io.req.bits.in_addr_b
 
+  vec_out.requestChannel.valid := DontCare
+  vec_out.requestChannel.bits := DontCare
+  vec_out.dataChannel.data.valid := DontCare
+  vec_out.dataChannel.data.bits := DontCare
+  // Total bytes = pair count × bytes per pair.
+  vec_a.requestChannel.bits.len  := pairBytes.U * io.req.bits.length
+  vec_b.requestChannel.bits.len  := pairBytes.U * io.req.bits.length
   // Three-state machine: no flush state needed because there is no writer.
   val s_idle :: s_go :: s_response :: Nil = Enum(3)
   val state = RegInit(s_idle)
 
-  io.req.ready  := state === s_idle && pairs.requestChannel.ready
+  io.req.ready  := state === s_idle && vec_a.requestChannel.ready && vec_b.requestChannel.ready
   io.resp.valid := state === s_response
 
   // Registers to track in-flight computation.
@@ -57,13 +66,13 @@ class DotProductCore(implicit p: Parameters) extends AcceleratorCore {
   }
 
   // Consume one pair per cycle while running.
-  val consume = pairs.dataChannel.data.valid && (state === s_go)
-  pairs.dataChannel.data.ready := consume
+  val consume = vec_a.dataChannel.data.valid && vec_b.dataChannel.data.valid && (state === s_go)
+  vec_a.dataChannel.data.ready := consume
+  vec_b.dataChannel.data.ready := consume
 
   when(consume) {
-    val beat = pairs.dataChannel.data.bits
-    val a    = beat(elemBits - 1, 0)
-    val b    = beat(2 * elemBits - 1, elemBits)
+    val a    = vec_a.dataChannel.data.bits
+    val b    = vec_b.dataChannel.data.bits
     // Product of two UInt(32.W) is UInt(64.W); explicit truncation on accumulate.
     accumulator := (accumulator + (a * b))(63, 0)
     count       := count + 1.U

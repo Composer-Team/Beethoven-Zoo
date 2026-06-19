@@ -18,7 +18,9 @@ class DotProductConfig extends AcceleratorConfig({
       name = "DotProductCore",
       moduleConstructor = ModuleBuilder(p => new DotProductCore()(p)),
       memoryChannelConfig = List(
-        ReadChannelConfig("pairs", dataBytes = pairBytes)
+        ReadChannelConfig("vec_a", dataBytes = pairBytes),
+        ReadChannelConfig("vec_b", dataBytes = pairBytes),
+        WriteChannelConfig("vec_out", dataBytes = pairBytes)
       )
     )
   )
