@@ -3,7 +3,7 @@ ThisBuild / version := "0.1.0"
 ThisBuild / organization := "local"
 
 val chiselVersion = "7.1.0"
-val beethovenHardwareVersion = "0.1.7-dev12"
+val beethovenHardwareVersion = "latest.integration"
 
 lazy val root = (project in file("."))
   .settings(
