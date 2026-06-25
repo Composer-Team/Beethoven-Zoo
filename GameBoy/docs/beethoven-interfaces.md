@@ -21,7 +21,7 @@ Defined in `Beethoven.toml`.
 |---|---:|---|---|
 | `[project].name` | `gameboy` | Names the Beethoven project. | Consistent generated artifact namespace under `target/`. |
 | `[hardware].src-dir` | `hw` | Points Beethoven at the Chisel hardware wrapper. | Hardware elaboration entry point discovery. |
-| `[hardware.beethoven-hardware].path` | `../../Beethoven-Hardware` | Locates the Beethoven framework checkout. | Imports framework types such as `AcceleratorCore`, `AccelCommand`, and memory channels. |
+| `[hardware.beethoven-hardware].version` | `latest.integration` | Resolves the published Beethoven framework artifact. | Imports framework types such as `AcceleratorCore`, `AccelCommand`, and memory channels without requiring a sibling source checkout. |
 | `[software].src-dir` | `sw` | Points at host-side C++/Python software. | Common layout for generated bindings and host builds. |
 | `[platform].target` | `aupzu3` | Selects AUP-ZU3 / Zynq UltraScale+ platform. | Platform integration, address sizing, AXI/PS wiring, Vivado collateral. |
 | `[platform].simulator` | `verilator` | Selects the simulation backend. | Simulation runtime generation. |

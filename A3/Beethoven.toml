@@ -7,8 +7,8 @@ name = "a3"
 src-dir = "hw"
 
 [hardware.beethoven-hardware]
-# Beethoven-Zoo is expected to be cloned next to Beethoven-Hardware.
-path = "../../Beethoven-Hardware"
+# Use the published framework artifact so a standalone Zoo clone can build.
+version = "latest.integration"
 
 [software]
 src-dir = "sw"

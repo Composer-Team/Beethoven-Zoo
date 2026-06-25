@@ -3,25 +3,14 @@ ThisBuild / version := "0.1.0"
 ThisBuild / organization := "local"
 
 val chiselVersion = "7.1.0"
-
-val beethovenHardwarePath = sys.env
-  .get("BEETHOVEN_HARDWARE")
-  .map(file)
-  .getOrElse {
-    Seq(
-      file("../../Beethoven-Hardware"), // Beethoven-Zoo cloned next to Beethoven-Hardware
-      file("../Beethoven-Hardware")     // legacy in-tree checkout layout
-    ).find(_.exists()).getOrElse(file("../../Beethoven-Hardware"))
-  }
-
-lazy val beethovenHardware = RootProject(beethovenHardwarePath)
+val beethovenHardwareVersion = "latest.integration"
 
 lazy val root = (project in file("."))
-  .dependsOn(beethovenHardware)
   .settings(
     name := "beethoven-gameboy",
     libraryDependencies ++= Seq(
       "org.chipsalliance" %% "chisel" % chiselVersion,
+      "edu.duke.cs.apex" %% "beethoven-hardware" % beethovenHardwareVersion,
       "com.github.tototoshi" %% "scala-csv" % "1.3.10"
     ),
     Compile / unmanagedSourceDirectories +=
@@ -36,5 +25,6 @@ lazy val root = (project in file("."))
       "-Xcheckinit",
       "-Ymacro-annotations"
     ),
+    resolvers += ("reposilite-repository-releases" at "http://54.165.244.214:8080/releases").withAllowInsecureProtocol(true),
     addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full)
   )

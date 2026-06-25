@@ -10,9 +10,7 @@ The original A3 example lived under the legacy Composer examples tree and was bu
 
 - Added a Zoo manifest in `Beethoven.toml`.
 - Added an sbt project in `build.sbt` using Scala 2.13.18 and Chisel 7.5.0.
-- Depends on sibling source checkouts:
-  - `../../Beethoven-Hardware`
-  - `../../fixedpoint`
+- Depends on the published `edu.duke.cs.apex %% beethoven-hardware` artifact by default, plus a pinned `fixedpoint` Git source dependency for the A3 fixed-point math library.
 - Added a standard Zoo software build in `sw/CMakeLists.txt`.
 - Moved the A3 testbench to `sw/a3_tb.cc`.
 - Preserved the original n=320, d=64, q=16 golden data in `sw/A3-n320d64q16.h`.

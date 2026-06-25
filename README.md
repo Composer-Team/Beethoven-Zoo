@@ -11,13 +11,9 @@ A collection of complete example accelerators and demos built with the Beethoven
 | [`SHAKE256`](SHAKE256/) | Generic | Verilog SHAKE256 demo with a C++ software reference testbench. |
 | [`A3`](A3/) | Generic simulation (`default` / Icarus) | Legacy attention accelerator ported behind a manifest-driven Zoo wrapper with deterministic A3 golden-vector simulation. |
 
-## Checkout layout
+## Development Note
 
-Most examples expect the Zoo checkout to sit next to the Beethoven framework checkouts:
+A standalone Beethoven-Zoo clone can build after `beethoven setup`.
 
-```text
-<workspace>/
-  Beethoven-Zoo/
-  Beethoven-Hardware/
-  Beethoven-Software/
-```
+Developers iterating on Beethoven-Hardware can still override individual manifests with a source `path`, but the tutorial smoke path should not require sibling checkouts.
+
