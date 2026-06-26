@@ -24,3 +24,8 @@
 **/*.sav
 **/*.rtc
 **/roms/
+
+
+*.swp
+*/project/*
+.bloop/

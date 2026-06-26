@@ -20,9 +20,12 @@ class SystolicArrayConfig extends AcceleratorConfig({
       name = "SystolicArrayCore",
       moduleConstructor = ModuleBuilder(p => new SystolicArrayCore(systolic_array_dim)(p)),
       memoryChannelConfig = List(
-        ReadChannelConfig(
-          "weights",
-          dataBytes = data_width_bytes * systolic_array_dim
+        ScratchpadConfig(
+          name = "WeightScratchpad",
+          dataWidthBits = data_width_bits * systolic_array_dim,
+          nDatas = max_inner_dimension,
+          nPorts = 1,
+          features = ScratchpadFeatures(readOnly = true)
         ),
         ReadChannelConfig(
           "activations",

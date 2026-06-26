@@ -10,7 +10,7 @@ val chiselVersion = "7.1.0"
 lazy val root = {
   (project in file("."))
     .settings(
-      name := "vector_add",
+      name := "systolic_array",
       // Redirect sbt's compile cache out of the way so target/ is mostly
       // Beethoven outputs (binding/, simulation/ | synthesis/, .cache/)
       // plus a single hidden target/.sbt/ sibling holding sbt's bookkeeping
@@ -21,7 +21,7 @@ lazy val root = {
       Test / unmanagedSourceDirectories := Seq.empty,
       Compile / mainClass := Some("beethoven.cli.Run"),
       libraryDependencies += "org.chipsalliance" %% "chisel" % chiselVersion,
-      libraryDependencies += "edu.duke.cs.apex" %% "beethoven-hardware" % "latest.integration",
+      libraryDependencies += "edu.duke.cs.apex" %% "beethoven-hardware" % "0.1.7-dev19",
       // we're currently hosting a maven server on an AWS instance, prior to official release on a global repository
       resolvers += ("reposilite-repository-releases" at "http://54.165.244.214:8080/releases").withAllowInsecureProtocol(true),
       addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),

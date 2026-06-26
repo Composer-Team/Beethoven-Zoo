@@ -3,7 +3,11 @@ ThisBuild / version := "0.1.0"
 ThisBuild / organization := "local"
 
 val chiselVersion = "7.1.0"
+<<<<<<< HEAD
 val beethovenHardwareVersion = "latest.integration"
+=======
+val beethovenHardwareVersion = "0.1.7-dev13"
+>>>>>>> cc0f569 (add systolic array back)
 
 lazy val root = (project in file("."))
   .settings(

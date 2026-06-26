@@ -4,3 +4,4 @@ project(systolic_array LANGUAGES CXX)
 find_package(beethoven REQUIRED)
 
 beethoven_build(systolic_array_tb SOURCES systolic_array_tb.cc)
+beethoven_build(init_weights_tb SOURCES init_weights_tb.cc)
