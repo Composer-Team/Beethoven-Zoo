@@ -7,7 +7,7 @@
 using namespace beethoven;
 
 namespace {
-constexpr int kInnerDimension = 4;
+constexpr int kInnerDimension = 16;
 } // namespace
 
 // Minimal smoke test: exercise "init_weights" in isolation (no matmul), to

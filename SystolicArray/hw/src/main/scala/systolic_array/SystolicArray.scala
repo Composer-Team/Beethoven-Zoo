@@ -6,25 +6,33 @@ import beethoven.common.ShiftRegEnable
 import org.chipsalliance.cde.config.Parameters
 import systolic_array.Constants._
 
-class SystolicArray(implicit p: Parameters) extends Module {
-  val io = IO(new Bundle {
-    val act_in = Input(UInt((systolic_array_dim * data_width_bits).W))
-    val act_valid = Input(Bool())
-    val act_ready = Output(Bool())
+// Shared IO shape for the systolic array compute fabric, common to both the
+// Chisel-native implementation (SystolicArray) and the hand-written-Verilog
+// blackbox implementation (SystolicArrayBlackboxWrapper) so SystolicArrayCore
+// can drive either one identically.
+class SystolicArrayIO(implicit p: Parameters) extends Bundle {
+  val act_in = Input(UInt((systolic_array_dim * data_width_bits).W))
+  val act_valid = Input(Bool())
+  val act_ready = Output(Bool())
 
-    val wgt_in = Input(UInt((systolic_array_dim * data_width_bits).W))
-    val wgt_valid = Input(Bool())
-    val wgt_ready = Output(Bool())
+  val wgt_in = Input(UInt((systolic_array_dim * data_width_bits).W))
+  val wgt_valid = Input(Bool())
+  val wgt_ready = Output(Bool())
 
-    val accumulator_out = Output(UInt((systolic_array_dim * data_width_bits).W))
-    val accumulator_out_valid = Output(Bool())
-    val accumulator_out_ready = Input(Bool())
+  val accumulator_out = Output(UInt((systolic_array_dim * data_width_bits).W))
+  val accumulator_out_valid = Output(Bool())
+  val accumulator_out_ready = Input(Bool())
 
-    val ctrl_start_matmul = Input(Bool())
-    val ctrl_start_ready = Output(Bool())
-    val ctrl_inner_dimension = Input(UInt(20.W))
-  })
+  val ctrl_start_matmul = Input(Bool())
+  val ctrl_start_ready = Output(Bool())
+  val ctrl_inner_dimension = Input(UInt(20.W))
+}
 
+abstract class SystolicArrayLike(implicit p: Parameters) extends Module {
+  val io = IO(new SystolicArrayIO())
+}
+
+class SystolicArray(implicit p: Parameters) extends SystolicArrayLike {
   val PEs = Seq.fill(systolic_array_dim, systolic_array_dim)(Module(new ProcessingElement()))
 
   val s_idle :: s_go :: s_drain :: s_shift :: Nil = Enum(4)

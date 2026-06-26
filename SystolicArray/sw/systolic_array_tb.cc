@@ -8,7 +8,7 @@
 using namespace beethoven;
 
 namespace {
-constexpr int kInnerDimension = 4;
+constexpr int kInnerDimension = 16;
 constexpr int kMagnitudeMask = (1 << (DATA_WIDTH_BYTES * 8 - 1)) - 1;
 constexpr int kSignBit = 1 << (DATA_WIDTH_BYTES * 8 - 1);
 
