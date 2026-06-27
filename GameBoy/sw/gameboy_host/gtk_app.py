@@ -59,6 +59,9 @@ class GtkGameboyApp:
         self.window.connect("key-release-event", self._on_key_release)
 
         self.area = Gtk.DrawingArea()
+        self.area.set_size_request(FRAME_WIDTH * scale, FRAME_HEIGHT * scale)
+        self.area.set_hexpand(True)
+        self.area.set_vexpand(True)
         self.area.set_can_focus(True)
         self.area.connect("draw", self._on_draw)
         self.area.connect("key-press-event", self._on_key_press)
@@ -88,6 +91,9 @@ class GtkGameboyApp:
             FRAME_WIDTH * 3,
         )
         self.area.queue_draw()
+        window = self.area.get_window()
+        if window is not None:
+            window.process_updates(True)
         return True
 
     def _on_draw(self, _widget: object, context: object) -> bool:
