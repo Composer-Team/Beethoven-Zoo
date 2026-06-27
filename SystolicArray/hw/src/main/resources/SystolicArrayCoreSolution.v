@@ -45,19 +45,26 @@ module SystolicArrayCore #(parameter SYSTOLIC_ARRAY_DIM, DATA_WIDTH_BITS, INT_BI
   input clock,
   input areset,
 
+  // "matmul" command: run a matmul of the activations at act_addr against whatever weights are
+  // currently loaded into the scratchpad, streaming `inner_dimension` columns/rows through the
+  // array, and write the SYSTOLIC_ARRAY_DIM x SYSTOLIC_ARRAY_DIM result to out_addr.
   input          cmd_matmul_valid,
   output         cmd_matmul_ready,
   input  [19:0]  cmd_matmul_inner_dimension,
   input  [48:0]  cmd_matmul_out_addr_address,
   input  [48:0]  cmd_matmul_act_addr_address,
+  // "init_weights" command: DMA `inner_dimension` rows of weights from wgt_addr into the
+  // WeightScratchpad so a later "matmul" command can stream them into the array.
   input          cmd_init_weights_valid,
   output         cmd_init_weights_ready,
   input  [19:0]  cmd_init_weights_inner_dimension,
   input  [48:0]  cmd_init_weights_wgt_addr_address,
+  // Both commands use Beethoven's EmptyAccelResponse - just a completion pulse, no payload.
   output         resp_matmul_valid,
   input          resp_matmul_ready,
   output         resp_init_weights_valid,
   input          resp_init_weights_ready,
+  // "activations" DMA reader: streams the activation matrix in from memory during "matmul".
   output         activations_req_valid,
   input          activations_req_ready,
   output [31:0]  activations_req_len,
@@ -66,6 +73,7 @@ module SystolicArrayCore #(parameter SYSTOLIC_ARRAY_DIM, DATA_WIDTH_BITS, INT_BI
   input          activations_data_valid,
   output         activations_data_ready,
   input  [127:0] activations_data,
+  // "vec_out" DMA writer: streams the matmul result back out to memory.
   output         vec_out_req_valid,
   input          vec_out_req_ready,
   output [31:0]  vec_out_req_len,
@@ -74,6 +82,9 @@ module SystolicArrayCore #(parameter SYSTOLIC_ARRAY_DIM, DATA_WIDTH_BITS, INT_BI
   output         vec_out_data_valid,
   input          vec_out_data_ready,
   output [127:0] vec_out_data,
+  // WeightScratchpad: word-at-a-time read/write port (only reads are used here), plus
+  // memory-mapped DMA ports to bulk-load ("init") or bulk-flush ("wb") the scratchpad. This
+  // core never writes the scratchpad back out, so the wb_* ports are tied off below.
   output         WeightScratchpad_req_valid,
   input          WeightScratchpad_req_ready,
   output         WeightScratchpad_req_write_enable,
@@ -99,19 +110,19 @@ localparam WEIGHT_QUEUE_DEPTH = 8;        // depth of the FIFO buffering scratch
 
 // A command's ready/valid handshake "fires" the cycle both sides assert their signal -
 // that's the cycle its argument fields are actually consumed.
-wire cmd_fire = ???;
+wire cmd_fire = cmd_matmul_valid && cmd_matmul_ready;
 wire winit_fire = cmd_init_weights_valid && cmd_init_weights_ready;
 
 // Kick off both DMA streams the same cycle a "matmul" command fires: the writer (vec_out)
 // reserves space for the SYSTOLIC_ARRAY_DIM x SYSTOLIC_ARRAY_DIM result up front, and the
 // reader (activations) starts streaming the activation matrix in immediately.
 assign vec_out_req_valid = cmd_fire;
-assign vec_out_req_len = (??? * (DATA_WIDTH_BITS / 8));
-assign vec_out_req_addr_address = ???;
+assign vec_out_req_len = (SYSTOLIC_ARRAY_DIM * SYSTOLIC_ARRAY_DIM * (DATA_WIDTH_BITS / 8));
+assign vec_out_req_addr_address = cmd_matmul_out_addr_address;
 
 assign activations_req_valid = cmd_fire;
-assign activations_req_len = ??? * (DATA_WIDTH_BITS / 8);
-assign activations_req_addr_address = ???;
+assign activations_req_len = (DATA_WIDTH_BITS / 8) * SYSTOLIC_ARRAY_DIM * cmd_matmul_inner_dimension;
+assign activations_req_addr_address = cmd_matmul_act_addr_address;
 
 // This core never writes the scratchpad's contents back to memory, so the writeback DMA port
 // is permanently tied off.
@@ -153,19 +164,21 @@ reg [48:0] storedWgtAddr;
 reg [19:0] storedInnerDim;
 reg [3:0]  settleCounter;
 
-assign WeightScratchpad_init_valid = winit_state == `WINIT_ISSUE;
-assign WeightScratchpad_init_memAddr_address = storedWgtAddr;
-assign WeightScratchpad_init_scAddr = 'd0; // weights always load starting at scratchpad address 0
-assign WeightScratchpad_init_len = storedInnerDim * (SYSTOLIC_ARRAY_DIM * (DATA_WIDTH_BITS / 8));
-
 // Only accept a new "matmul" command when idle on both FSMs and both DMA streams can take a
 // new request (back-pressure from the memory-side queues feeds straight back to the host).
-assign cmd_matmul_ready = ???;
-assign resp_matmul_valid = ???;
+assign cmd_matmul_ready = state == `IDLE
+        && winit_state == `WINIT_IDLE
+        && activations_req_ready
+        && vec_out_req_ready;
+assign resp_matmul_valid = state == `RESPONSE;
 
 assign cmd_init_weights_ready = winit_state == `WINIT_IDLE && state == `IDLE;
 assign resp_init_weights_valid = winit_state == `WINIT_RESP;
 
+assign WeightScratchpad_init_valid = winit_state == `WINIT_ISSUE;
+assign WeightScratchpad_init_memAddr_address = storedWgtAddr;
+assign WeightScratchpad_init_scAddr = 'd0; // weights always load starting at scratchpad address 0
+assign WeightScratchpad_init_len = storedInnerDim * (SYSTOLIC_ARRAY_DIM * (DATA_WIDTH_BITS / 8));
 
 always @(posedge clock) begin
   if (areset) begin
@@ -220,57 +233,22 @@ assign WeightScratchpad_req_addr = rdAddr;
 wire wgt_queue_deq_valid, wgt_queue_deq_ready;
 wire [127:0] wgt_queue_deq_data;
 
-wire sa_idle;
-
-// The actual compute datapath: a SYSTOLIC_ARRAY_DIM x SYSTOLIC_ARRAY_DIM grid of processing
-// elements (see SystolicArray.v) that streams activations and weights in, multiply-accumulates
-// them in place, and shifts the finished accumulator values out once the inner dimension is
-// exhausted. Everything above this point exists to keep its act_in/wgt_in ports fed and to wrap
-// its start/done signals in the host-facing command protocol.
-SystolicArray #(.DATA_WIDTH_BITS(DATA_WIDTH_BITS), .FRAC_BITS(FRAC_BITS), .INT_BITS(INT_BITS), .SYSTOLIC_ARRAY_DIM(SYSTOLIC_ARRAY_DIM)) sa(
+// FIFO between the scratchpad's read responses and the array's weight input - absorbs the
+// scratchpad's response latency and any rate mismatch with the array.
+WeightQueue #(.WIDTH(SYSTOLIC_ARRAY_DIM * DATA_WIDTH_BITS), .DEPTH(WEIGHT_QUEUE_DEPTH)) weightQueue (
   .clk(clock),
   .rst(areset),
 
-  .act_in(???),
-  .act_valid(???),
-  .act_ready(???),
+  .enq_valid(WeightScratchpad_resp_valid),
+  .enq_ready(),                 // not checked: the scratchpad never returns more responses
+                                 // than were requested, and requests are capped by `outstanding`,
+                                 // so the queue can never overflow.
+  .enq_data(WeightScratchpad_resp),
 
-  .wgt_in(wgt_queue_deq_data),
-  .wgt_valid(wgt_queue_deq_valid),
-  .wgt_ready(wgt_queue_deq_ready),
-
-  .accumulator_out(???),
-  .accumulator_out_valid(???),
-  .accumulator_out_ready(???),
-
-  .ctrl_start_matmul(???),
-  .ctrl_start_ready(sa_idle),
-  .ctrl_inner_dimension(???)
+  .deq_valid(wgt_queue_deq_valid),
+  .deq_ready(wgt_queue_deq_ready),
+  .deq_data(wgt_queue_deq_data)
 );
-
-// Top-level matmul FSM (see state diagram in the `define block above): advances from GO to
-// FLUSH once the array reports idle (sa_idle) and the result DMA write has been issued and
-// fully flushed to memory, then to RESPONSE to signal completion to the host.
-always @(posedge clock) begin
-  if (areset) begin
-    state <= `IDLE;
-  end else begin
-    if (state == `IDLE) begin
-      if (???) begin
-        state <= `GO;
-      end
-    end else if (state == `GO) begin
-      if (sa_idle && ???) begin
-        state <= `RESPONSE;
-      end
-    end else if (state == `RESPONSE) begin
-      if (???) begin
-        state <= `IDLE;
-      end
-    end
-  end
-end
-
 
 always @(posedge clock) begin
   if (areset) begin
@@ -293,21 +271,55 @@ always @(posedge clock) begin
   end
 end
 
-// FIFO between the scratchpad's read responses and the array's weight input - absorbs the
-// scratchpad's response latency and any rate mismatch with the array.
-WeightQueue #(.WIDTH(SYSTOLIC_ARRAY_DIM * DATA_WIDTH_BITS), .DEPTH(WEIGHT_QUEUE_DEPTH)) weightQueue (
+wire sa_idle;
+
+// The actual compute datapath: a SYSTOLIC_ARRAY_DIM x SYSTOLIC_ARRAY_DIM grid of processing
+// elements (see SystolicArray.v) that streams activations and weights in, multiply-accumulates
+// them in place, and shifts the finished accumulator values out once the inner dimension is
+// exhausted. Everything above this point exists to keep its act_in/wgt_in ports fed and to wrap
+// its start/done signals in the host-facing command protocol.
+SystolicArray #(.DATA_WIDTH_BITS(DATA_WIDTH_BITS), .FRAC_BITS(FRAC_BITS), .INT_BITS(INT_BITS), .SYSTOLIC_ARRAY_DIM(SYSTOLIC_ARRAY_DIM)) sa(
   .clk(clock),
   .rst(areset),
 
-  .enq_valid(WeightScratchpad_resp_valid),
-  .enq_ready(),                 // not checked: the scratchpad never returns more responses
-                                 // than were requested, and requests are capped by `outstanding`,
-                                 // so the queue can never overflow.
-  .enq_data(WeightScratchpad_resp),
+  .act_in(activations_data),
+  .act_valid(activations_data_valid),
+  .act_ready(activations_data_ready),
 
-  .deq_valid(wgt_queue_deq_valid),
-  .deq_ready(wgt_queue_deq_ready),
-  .deq_data(wgt_queue_deq_data)
+  .wgt_in(wgt_queue_deq_data),
+  .wgt_valid(wgt_queue_deq_valid),
+  .wgt_ready(wgt_queue_deq_ready),
+
+  .accumulator_out(vec_out_data),
+  .accumulator_out_valid(vec_out_data_valid),
+  .accumulator_out_ready(vec_out_data_ready),
+
+  .ctrl_start_matmul(cmd_fire),
+  .ctrl_start_ready(sa_idle),
+  .ctrl_inner_dimension(cmd_matmul_inner_dimension)
 );
+
+// Top-level matmul FSM (see state diagram in the `define block above): advances from GO to
+// FLUSH once the array reports idle (sa_idle) and the result DMA write has been issued and
+// fully flushed to memory, then to RESPONSE to signal completion to the host.
+always @(posedge clock) begin
+  if (areset) begin
+    state <= `IDLE;
+  end else begin
+    if (state == `IDLE) begin
+      if (cmd_fire) begin
+        state <= `GO;
+      end
+    end else if (state == `GO) begin
+      if (sa_idle && vec_out_req_ready && vec_out_isFlushed) begin
+        state <= `RESPONSE;
+      end
+    end else if (state == `RESPONSE) begin
+      if (resp_matmul_ready) begin
+        state <= `IDLE;
+      end
+    end
+  end
+end
 
 endmodule
