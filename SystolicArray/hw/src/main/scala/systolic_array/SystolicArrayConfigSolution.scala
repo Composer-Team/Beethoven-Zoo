@@ -16,7 +16,7 @@ class SystolicArrayConfig extends AcceleratorConfig({
 
   List(
     AcceleratorSystemConfig(
-      nCores = ???,
+      nCores = 1,
       name = "SystolicArrayCore",
       moduleConstructor = ModuleBuilder(p => new SystolicArrayCore(systolic_array_dim)(p)),
       memoryChannelConfig = List(
@@ -29,11 +29,11 @@ class SystolicArrayConfig extends AcceleratorConfig({
         ),
         ReadChannelConfig(
           "activations",
-          dataBytes = ???
+          dataBytes = data_width_bytes * systolic_array_dim
         ),
         WriteChannelConfig(
           "vec_out",
-          dataBytes = ???
+          dataBytes = data_width_bytes * systolic_array_dim
         )
       )
     )
