@@ -18,13 +18,6 @@
 **/*.jou
 **/*.log
 
-# User ROMs and emulator persistence files are not redistributed.
-# User ROMs for this demo are .gbc files.
-**/*.gbc
-**/*.sav
-**/*.rtc
-**/roms/
-
 
 *.swp
 */project/*

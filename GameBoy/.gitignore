@@ -16,10 +16,3 @@ __pycache__/
 *.fst
 *.wdb
 *.jou
-
-# User-provided ROMs and save/RTC persistence files are never committed.
-# User ROMs for this demo are .gbc files.
-*.gbc
-*.sav
-*.rtc
-roms/
