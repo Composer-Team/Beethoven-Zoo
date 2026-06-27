@@ -47,7 +47,7 @@ class SystolicArray(implicit p: Parameters) extends SystolicArrayLike {
 
   val inner_dimension_ctr = RegInit(0.U(20.W))
   val n_inner_dimension_ctr = inner_dimension_ctr - 1.U
-  val can_increment_inputs = (io.act_valid && io.wgt_valid) || state =/= s_go
+  val can_increment_inputs = (io.act_valid && io.wgt_valid) || state === s_drain//=/= s_go 
   io.accumulator_out := Cat(PEs.map(row => row(0).io.accumulator).reverse)
 
   (0 until systolic_array_dim).foreach { row =>
