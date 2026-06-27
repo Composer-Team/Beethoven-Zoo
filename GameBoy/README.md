@@ -1,6 +1,6 @@
 # Beethoven Game Boy Emulator
 
-![cgb-acid2 running through the Beethoven Game Boy emulator on AUP-ZU3](docs/images/cgb-acid2-zu3.png)
+![cgb-acid2 (GBC testbench) running through the Beethoven Game Boy emulator on AUP-ZU3](docs/images/cgb-acid2-zu3.png)
 
 This is the Game Boy / Game Boy Color demo for Beethoven on AUP-ZU3. The short version: the Game Boy core runs in the FPGA fabric, Linux on the Zynq PS loads your ROM, owns the window/input/audio path, and the two sides talk through Beethoven commands plus shared DDR buffers. It is meant to be a real board demo, not a polished desktop emulator.
 
@@ -83,10 +83,6 @@ ROM/save files + GTK/input/audio on Linux PS
 
 That split is the point of the demo: no PL HDMI, no PL audio codec, no cartridge slot, no link cable. Those are out of scope for this version.
 
-## Current rough edges
-
-Simulation and smoke tests require Verilator. Board GUI smoke has matched the `cgb-acid2` reference image, but physical audio playback on the current board image is still flaky, so automated checks use `--alsa-null` or `--no-audio`. Physical keyboard/gamepad testing depends on what input devices Linux exposes on the board.
-
 ## Useful files
 
 `docs/interfaces.md` is the PS/PL contract. `docs/beethoven-interfaces.md` explains which Beethoven pieces are used and why. `docs/board-bringup.md` is the board checklist. `sw/gameboy_host/` is the Python host, `sw/gameboy_bridge.cc` is the C++ bridge, and `hw/src/main/scala/gameboy_zu3/` is the Beethoven wrapper around the core.
@@ -96,3 +92,6 @@ Simulation and smoke tests require Verilator. Board GUI smoke has matched the `c
 The Game Boy / Game Boy Color core under `hw/src/main/scala/gameboy/**` is derived from the GPLv3 Game Bub project and adapted for this Beethoven/ZU3 example. Game Bub is the upstream reference, but it is not vendored here and is not a build-time dependency.
 
 Upstream: <https://github.com/elipsitz/gamebub>
+
+An example Tobu Tobu Girl Deluxe Rom (`tobudx.gbc`) is an open-sourced platformer game for GBC: `https://github.com/SimonLarsen/tobutobugirl-dx`.
+The source code for Tobu Tobu Girl is licensed under the MIT License. 
