@@ -28,6 +28,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gamepad", action="store_true", help="Poll a Linux /dev/input gamepad while the GTK UI is running")
     parser.add_argument("--gamepad-device", type=Path, help="Explicit /dev/input/event* device for --gamepad")
     parser.add_argument("--dmg", action="store_true")
+    parser.add_argument("--scale", type=int, choices=range(1, 25), default=4, metavar="N",
+                        help="Window size as a multiple of 160x144, each pixel repeated N x N (1-24, default 4)")
     return parser.parse_args()
 
 
@@ -79,7 +81,7 @@ def main() -> None:
 
             with gamepad if gamepad is not None else _NullContext():
                 with AplayAudioPlayer(dev, alsa_device=args.audio_device) if args.run and not args.no_audio else _NullContext():
-                    GtkGameboyApp(dev, gamepad=gamepad).run()
+                    GtkGameboyApp(dev, scale=args.scale, gamepad=gamepad).run()
             return
         print("running" if args.run else "configured")
 

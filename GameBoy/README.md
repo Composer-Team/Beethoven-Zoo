@@ -57,6 +57,8 @@ PYTHONPATH=sw python3 -m gameboy_host \
 That should open a GTK window and run the included game through the PL core. The
 same command works with another ROM by changing only the `--rom` path.
 
+Add `--scale N` (1-24, default 4; `launch_mario.sh` defaults to 8) to set the window size; each Game Boy pixel is repeated N x N, so the picture stays sharp.
+
 Drop `--no-audio` once the board's Linux audio path is behaving, or pass `--audio-device hw:0,0` if you want to force an ALSA PCM. The GUI path needs PyGObject/GTK3, and audio uses `aplay`; on Ubuntu-style images that usually means `python3-gi`, `gir1.2-gtk-3.0`, and `alsa-utils`. Add `--gamepad` to poll a Linux `/dev/input/event*` gamepad while the GTK window is open. The keyboard mapping is intentionally boring: arrows are the D-pad, `z` is A, `x` is B, `a` is Select, and `s` is Start.
 
 For first board bring-up, do not freestyle it. Use `docs/board-bringup.md`; it has the exact runtime build, PL programming, hugepage, `/dev/mem`, smoke-test, and GUI screenshot checks.

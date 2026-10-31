@@ -4,8 +4,10 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  bash launch_mario.sh          # launch Super Mario Bros. in GTK
-  bash launch_mario.sh --probe  # start runtime, verify bridge, then exit
+  bash launch_mario.sh             # launch Super Mario Bros. in GTK (8x window)
+  bash launch_mario.sh --scale 12  # window size 1x-24x of 160x144, pixels repeated
+  bash launch_mario.sh --fps       # also print ui/core frame rates once a second
+  bash launch_mario.sh --probe     # start runtime, verify bridge, then exit
 
 From the ZU3 desktop terminal, DISPLAY is usually already set.
 From remote SSH for the physical display, either set DISPLAY=:0 or let this
@@ -14,19 +16,44 @@ through sudo -E when needed so the runtime, bridge, and GUI share one UID.
 EOF
 }
 
-case "${1:-}" in
-  -h|--help)
-    usage
-    exit 0
-    ;;
-  ""|--probe)
-    MODE="${1:-run}"
-    ;;
-  *)
-    usage >&2
-    exit 2
-    ;;
-esac
+MODE=run
+SCALE="${SCALE:-8}"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --probe)
+      MODE=--probe
+      shift
+      ;;
+    --scale)
+      SCALE="${2:-}"
+      shift 2 || true
+      ;;
+    --scale=*)
+      SCALE="${1#--scale=}"
+      shift
+      ;;
+    [0-9]x|[0-9][0-9]x)
+      SCALE="${1%x}"
+      shift
+      ;;
+    --fps)
+      export GB_FPS=1
+      shift
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+if [[ ! "$SCALE" =~ ^[0-9]+$ ]] || (( SCALE < 1 || SCALE > 24 )); then
+  echo "--scale must be 1-24" >&2
+  exit 2
+fi
 
 if [[ -z "${DISPLAY:-}" && -S /tmp/.X11-unix/X0 ]]; then
   export DISPLAY=:0
@@ -222,4 +249,5 @@ python3 -m gameboy_host \
   --rom "$ROM" \
   --run \
   --gtk \
+  --scale "$SCALE" \
   --no-audio
