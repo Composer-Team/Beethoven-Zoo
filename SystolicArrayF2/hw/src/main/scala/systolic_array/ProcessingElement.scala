@@ -22,11 +22,15 @@ class ProcessingElement extends Module {
     val act_valid_out = Output(Bool())
   })
 
-  val accumulator = RegInit(0.U(data_width_bits.W))
-  val wgt_out = RegInit(0.U(data_width_bits.W))
-  val wgt_valid_out = RegInit(false.B)
-  val act_out = RegInit(0.U(data_width_bits.W))
-  val act_valid_out = RegInit(false.B)
+  val accumulator = Reg(UInt(data_width_bits.W))
+  val wgt_out = Reg(UInt(data_width_bits.W))
+  val wgt_valid_out = Reg(Bool())
+  val act_out = Reg(UInt(data_width_bits.W))
+  val act_valid_out = Reg(Bool())
+  val product_f_reg = Reg(UInt((data_width_bits - 1).W))
+  val product_s_reg = Reg(Bool())
+  val product_valid_reg = Reg(Bool())
+
   io.accumulator := accumulator
   io.wgt_out := wgt_out
   io.wgt_valid_out := wgt_valid_out
@@ -45,8 +49,8 @@ class ProcessingElement extends Module {
   val accumulator_f = accumulator.tail(1)
   val accumulator_s = accumulator.head(1).asBool
 
-  val opp_sign = product_s ^ accumulator_s
-  val adj_product_f = Mux(opp_sign, (~product_f) + 1.U, product_f)
+  val opp_sign = product_s_reg ^ accumulator_s
+  val adj_product_f = Mux(opp_sign, (~product_f_reg) + 1.U, product_f_reg)
   val addition = accumulator_f + adj_product_f
 
   val oflow = addition.tail(1).head(1).asBool
@@ -59,17 +63,23 @@ class ProcessingElement extends Module {
     accumulator := 0.U
     act_valid_out := false.B
     wgt_valid_out := false.B
+    product_valid_reg := false.B
   }.otherwise {
     when(io.shift_out) {
       accumulator := io.accumulator_shift
-    }.otherwise {
-      when(io.wgt_valid && io.act_valid) {
-        accumulator := updated_accumulator
-      }
+    }.elsewhen(product_valid_reg) {
+      accumulator := updated_accumulator
     }
+
     wgt_valid_out := io.wgt_valid
     act_valid_out := io.act_valid
+    product_valid_reg := io.wgt_valid && io.act_valid
+    when(io.wgt_valid && io.act_valid) {
+      product_f_reg := product_f
+      product_s_reg := product_s
+    }
   }
+
   wgt_out := io.wgt
   act_out := io.act
 }
