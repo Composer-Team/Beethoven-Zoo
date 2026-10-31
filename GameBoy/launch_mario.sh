@@ -16,6 +16,7 @@ through sudo -E when needed so the runtime, bridge, and GUI share one UID.
 EOF
 }
 
+ORIG_ARGS=("$@")
 MODE=run
 SCALE="${SCALE:-8}"
 while [[ $# -gt 0 ]]; do
@@ -66,7 +67,7 @@ fi
 
 if [[ "$EUID" -ne 0 ]]; then
   echo "Re-running with sudo -E so the runtime, bridge, and GUI use the same privileged context."
-  exec sudo -E bash "$0" "$@"
+  exec sudo -E bash "$0" "${ORIG_ARGS[@]}"
 fi
 
 BOARD_USER="${SUDO_USER:-mason}"
